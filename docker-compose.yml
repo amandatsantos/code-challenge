@@ -12,3 +12,26 @@ services:
       - ./data/northwind.sql:/docker-entrypoint-initdb.d/northwind.sql
     ports:
       - 5432:5432
+
+  airflow:
+    image: apache/airflow:2.3.0
+    environment:
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/airflow
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+
+  python_app:
+    image: python:3.9-slim  
+    working_dir: /app       
+    volumes:
+      - ./scripts:/app      
+    command: ["python", "process_csv.py", "--execution_date", "2024-01-01"]
+
+    depends_on:
+      - db
